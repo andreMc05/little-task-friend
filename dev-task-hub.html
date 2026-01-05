@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="color-scheme" content="light dark" />
+  <title>Dev Task Hub</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="topbar" role="banner">
+        <div class="brand" aria-label="App name">
+          <b>Dev Task Hub</b>
+          <span>Tasks • Notes • Ideas (offline)</span>
+        </div>
+
+        <div class="search" role="search">
+          <label class="sr-only" for="q">Search tasks, notes, ideas</label>
+          <input id="q" name="q" autocomplete="off" placeholder="Search… (press / to focus)" />
+          <span class="kbd" aria-hidden="true">/</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn" id="btnExport" type="button">Export</button>
+          <button class="btn" id="btnImport" type="button">Import</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <nav aria-label="Primary">
+        <p class="nav-title">Workspace</p>
+        <button class="navbtn" type="button" data-view="tasks" aria-current="page">
+          <span>Tasks</span><span class="pill" id="pillTasks">0</span>
+        </button>
+        <button class="navbtn" type="button" data-view="notes">
+          <span>Notes</span><span class="pill" id="pillNotes">0</span>
+        </button>
+        <button class="navbtn" type="button" data-view="ideas">
+          <span>Ideas</span><span class="pill" id="pillIdeas">0</span>
+        </button>
+        <button class="navbtn" type="button" data-view="settings">
+          <span>Settings</span><span class="pill">↕</span>
+        </button>
+
+        <hr style="border:0;border-top:1px solid var(--color-border); margin: var(--space-4) 0;" />
+
+        <p class="nav-title">Quick Add</p>
+        <button class="btn primary" id="btnAddTask" type="button">+ Task</button>
+        <button class="btn primary" id="btnAddNote" type="button">+ Note</button>
+        <button class="btn primary" id="btnAddIdea" type="button">+ Idea</button>
+      </nav>
+
+      <section class="panel" id="panel" aria-live="polite"></section>
+    </main>
+
+    <div class="sr-only" aria-live="polite" id="live"></div>
+
+    <!-- Dialogs -->
+    <dialog id="dlgTask" aria-labelledby="dlgTaskTitle">
+      <form method="dialog" id="formTask">
+        <div class="dlg-head">
+          <div>
+            <h2 id="dlgTaskTitle">Task</h2>
+            <p style="margin:.35rem 0 0; color: var(--color-muted); font-size: var(--fs-0);">
+              Track time with start/stop. Link notes if needed.
+            </p>
+          </div>
+          <button class="btn" value="cancel" type="submit" aria-label="Close dialog">Close</button>
+        </div>
+        <div class="dlg-body">
+          <input type="hidden" name="id" />
+          <div class="two-col">
+            <div class="field">
+              <label for="taskTitle">Title *</label>
+              <input id="taskTitle" name="title" required maxlength="140" />
+            </div>
+            <div class="field">
+              <label for="taskTags">Tags (comma separated)</label>
+              <input id="taskTags" name="tags" maxlength="220" placeholder="e.g. api,bugfix,perf" />
+            </div>
+            <div class="field">
+              <label for="taskCategory">Main category</label>
+              <input id="taskCategory" name="category" maxlength="80" placeholder="e.g. Work, Personal, Learning" />
+            </div>
+            <div class="field">
+              <label for="taskSubcategory">Subcategory</label>
+              <input id="taskSubcategory" name="subcategory" maxlength="80" placeholder="e.g. Frontend, CI/CD" />
+            </div>
+          </div>
+
+          <div class="field" style="margin-top: var(--space-4);">
+            <label for="taskDesc">Description / Notes</label>
+            <textarea id="taskDesc" name="description" maxlength="6000" placeholder="Keep it short and useful."></textarea>
+          </div>
+
+          <div class="two-col" style="margin-top: var(--space-4);">
+            <div class="field">
+              <label for="taskLink">Task Link</label>
+              <input id="taskLink" name="taskLink" type="url" maxlength="500" placeholder="e.g. https://github.com/org/repo/issues/123" />
+            </div>
+            <div class="field">
+              <label for="repoLink">Repo Link</label>
+              <input id="repoLink" name="repoLink" type="url" maxlength="500" placeholder="e.g. https://github.com/org/repo" />
+            </div>
+          </div>
+
+          <div class="field" style="margin-top: var(--space-4);">
+            <label for="taskEstimate">Time Estimate</label>
+            <input id="taskEstimate" name="estimate" maxlength="20" placeholder="e.g. 30m, 2h, 1:30:00" />
+            <div style="font-size: var(--fs-0); color: var(--color-muted); margin-top: .2rem;">
+              Formats: 30m, 2h, 1:30:00, or just minutes (e.g. 45)
+            </div>
+          </div>
+        </div>
+        <div class="dlg-foot">
+          <button class="btn danger" id="btnDeleteTask" type="button">Delete</button>
+          <button class="btn" id="btnCancelTask" type="button">Cancel</button>
+          <button class="btn" id="btnSaveTask" type="submit" value="save">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="dlgNote" aria-labelledby="dlgNoteTitle">
+      <form method="dialog" id="formNote">
+        <div class="dlg-head">
+          <div>
+            <h2 id="dlgNoteTitle">Note</h2>
+            <p style="margin:.35rem 0 0; color: var(--color-muted); font-size: var(--fs-0);">
+              Keep short process steps, commands, or checklists.
+            </p>
+          </div>
+          <button class="btn" value="cancel" type="submit" aria-label="Close dialog">Close</button>
+        </div>
+        <div class="dlg-body">
+          <input type="hidden" name="id" />
+          <div class="two-col">
+            <div class="field">
+              <label for="noteTitle">Title *</label>
+              <input id="noteTitle" name="title" required maxlength="140" />
+            </div>
+            <div class="field">
+              <label for="noteTags">Tags (comma separated)</label>
+              <input id="noteTags" name="tags" maxlength="220" placeholder="e.g. git,release,debug" />
+            </div>
+            <div class="field">
+              <label for="noteCategory">Main category</label>
+              <input id="noteCategory" name="category" maxlength="80" placeholder="e.g. Git, Terminal, CI/CD" />
+            </div>
+            <div class="field">
+              <label for="noteSubcategory">Subcategory</label>
+              <input id="noteSubcategory" name="subcategory" maxlength="80" placeholder="e.g. Pre-commit, Commands" />
+            </div>
+          </div>
+          <div class="field" style="margin-top: var(--space-4);">
+            <label for="noteBody">Body</label>
+            <textarea id="noteBody" name="body" maxlength="12000" placeholder="- Step 1&#10;- Step 2&#10;&#10;Commands:&#10;git status"></textarea>
+          </div>
+          <div class="field" style="margin-top: var(--space-3);">
+            <label for="noteLinkedTasks">Link to task IDs (comma separated)</label>
+            <input id="noteLinkedTasks" name="linkedTaskIds" maxlength="400" placeholder="Paste task IDs from task details" />
+          </div>
+        </div>
+        <div class="dlg-foot">
+          <button class="btn danger" id="btnDeleteNote" type="button">Delete</button>
+          <button class="btn" id="btnCancelNote" type="button">Cancel</button>
+          <button class="btn" type="submit" value="save">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="dlgIdea" aria-labelledby="dlgIdeaTitle">
+      <form method="dialog" id="formIdea">
+        <div class="dlg-head">
+          <div>
+            <h2 id="dlgIdeaTitle">Idea / Side Project</h2>
+            <p style="margin:.35rem 0 0; color: var(--color-muted); font-size: var(--fs-0);">
+              Capture quickly. Add next step so it doesn’t die.
+            </p>
+          </div>
+          <button class="btn" value="cancel" type="submit" aria-label="Close dialog">Close</button>
+        </div>
+        <div class="dlg-body">
+          <input type="hidden" name="id" />
+          <div class="two-col">
+            <div class="field">
+              <label for="ideaTitle">Title *</label>
+              <input id="ideaTitle" name="title" required maxlength="140" />
+            </div>
+            <div class="field">
+              <label for="ideaStatus">Status</label>
+              <select id="ideaStatus" name="status">
+                <option value="seed">Seed</option>
+                <option value="researching">Researching</option>
+                <option value="building">Building</option>
+                <option value="shipped">Shipped</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ideaTags">Tags (comma separated)</label>
+              <input id="ideaTags" name="tags" maxlength="220" placeholder="e.g. observability,security,devtools" />
+            </div>
+            <div class="field">
+              <label for="ideaLinks">Links (comma separated)</label>
+              <input id="ideaLinks" name="links" maxlength="600" placeholder="e.g. docs, repos, tickets" />
+            </div>
+          </div>
+          <div class="field" style="margin-top: var(--space-4);">
+            <label for="ideaProblem">Problem</label>
+            <textarea id="ideaProblem" name="problem" maxlength="6000" placeholder="What pain does this solve?"></textarea>
+          </div>
+          <div class="field" style="margin-top: var(--space-3);">
+            <label for="ideaApproach">Approach</label>
+            <textarea id="ideaApproach" name="approach" maxlength="6000" placeholder="Rough outline. Keep it practical."></textarea>
+          </div>
+          <div class="field" style="margin-top: var(--space-3);">
+            <label for="ideaNextStep">Next step</label>
+            <input id="ideaNextStep" name="nextStep" maxlength="220" placeholder="Smallest next action (e.g. draft UI, spike API)"/>
+          </div>
+        </div>
+        <div class="dlg-foot">
+          <button class="btn danger" id="btnDeleteIdea" type="button">Delete</button>
+          <button class="btn" id="btnCancelIdea" type="button">Cancel</button>
+          <button class="btn" type="submit" value="save">Save</button>
+        </div>
+      </form>
+    </dialog>
+
+    <input type="file" id="fileImport" class="sr-only" accept="application/json" />
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
